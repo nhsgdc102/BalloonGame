@@ -3,26 +3,59 @@
 
 #include "CP_GameInstance.h"
 
-/*Additional Includes*/
+/*
+/*Additional Includes
 #include "Kismet/GameplayStatics.h"
 #include "CP_BestRecord.h"
+#include "CP_SaveState.h"
+*/
+#include "Kismet/GameplayStatics.h"
 #include "CP_SaveState.h"
 
 // Constructor--sets default values
 UCP_GameInstance::UCP_GameInstance()
 {
-	RoundNum = 1;
-	PlayerScore = 0;
-	NumEscapedBalloons = 0;
+	/*Default values -- used for new games*/
+	InitRoundNum = 1;
+	InitPlayerScore = 0;
+	InitNumEscapedBalloons = 0;
 }
 
-/*Saving high score and highest round*/
+// Loading data function--to be called from main menu widget
+bool UCP_GameInstance::LoadSaveState()
+{
+	/*Synchronously loads CP_SaveState object*/
+	UCP_SaveState* LoadedObj = Cast<UCP_SaveState, USaveGame>(
+		UGameplayStatics::LoadGameFromSlot(UCP_SaveState::GetSlotName(), UCP_SaveState::GetUserIndex()));
+	if (LoadedObj)
+	{
+		/*Copies over data*/
+		InitRoundNum = LoadedObj->GetRoundNumber();
+		InitPlayerScore = LoadedObj->GetPlayerScore();
+		InitNumEscapedBalloons = LoadedObj->GetEscapedBalloons();
+
+		/*Deletes loaded save object (This does not point to the object in the memory slot)*/
+		LoadedObj->BeginDestroy();
+		
+		return true;
+	}
+	else
+		return false;
+}
+
+/*Getter functions*/
+int32 UCP_GameInstance::GetInitRoundNumber() const { return InitRoundNum; }
+int32 UCP_GameInstance::GetInitPlayerScore() const { return InitPlayerScore; }
+int32 UCP_GameInstance::GetInitEscapedBalloons() const { return InitNumEscapedBalloons; }
+
+/*
+/*Saving high score and highest round
 // Saves best record when player dies
 void UCP_GameInstance::SaveBestRecord()
 {
 	/**
 	* https://docs.unrealengine.com/en-US/Gameplay/SaveGame/Code/index.html
-	*/
+	
 	FString SlotName = UCP_BestRecord::GetSlotName();
 	int32 UserIndex = UCP_BestRecord::GetUserIndex();
 
@@ -82,7 +115,7 @@ void UCP_GameInstance::AsyncSaveRecord(int32 HighScore, int32 HighestRound)
 // Called when a UCP_BestRecord object is saved
 void UCP_GameInstance::OnAsyncSaveRecord(const FString& SlotName, const int32 UserIndex, bool bSuccess) {}
 
-/*Mutator functions*/
+/*Mutator functions
 void UCP_GameInstance::AddRoundNumber(int32 Val)
 {
 	RoundNum += Val;
@@ -99,8 +132,8 @@ void UCP_GameInstance::AddEscapedBalloons(int32 Val)
 	EscapedBalloons_Delegate.Broadcast(NumEscapedBalloons);
 }
 
-/*Getter functions*/
+/*Getter functions
 int32 UCP_GameInstance::GetRoundNumber() const { return RoundNum; }
 int32 UCP_GameInstance::GetPlayerScore() const { return PlayerScore; }
 int32 UCP_GameInstance::GetEscapedBalloons() const { return NumEscapedBalloons; }
-
+*/

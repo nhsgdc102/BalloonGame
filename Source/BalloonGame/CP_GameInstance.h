@@ -6,16 +6,18 @@
 #include "Engine/GameInstance.h"
 #include "CP_GameInstance.generated.h"
 
-/*Forward declarations*/
+/*
+/*Forward declarations
 class USaveGame;
 
-/*Delegate declarations*/
+/*Delegate declarations
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateRoundNumber, int32, RoundNumber);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateScore, int32, Score);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateEscapedBalloons, int32, EscapedBalloons);
+*/
 
 /**
- * Stores all of the information needing to persist through level changes. Saves information not included in variables below when needed.
+ * Stores information needed by game mode and game state to initialize the game
  */
 UCLASS()
 class BALLOONGAME_API UCP_GameInstance : public UGameInstance
@@ -26,7 +28,21 @@ public:
 	// Constructor--sets default values
 	UCP_GameInstance();
 
-	/*Saving high score and highest round*/
+	// Loading data function--to be called from main menu widget
+	bool LoadSaveState();
+
+	/*Getter functions*/
+	int32 GetInitRoundNumber() const;
+	int32 GetInitPlayerScore() const;
+	int32 GetInitEscapedBalloons() const;
+	
+private:
+	int32 InitRoundNum;
+	int32 InitPlayerScore;
+	int32 InitNumEscapedBalloons;
+
+/*
+	/*Saving high score and highest round
 	// Saves best record when player dies
 	void SaveBestRecord();
 
@@ -37,12 +53,12 @@ public:
 		// Called when a UCP_BestRecord object is saved
 		void OnAsyncSaveRecord(const FString& SlotName, const int32 UserIndex, bool bSuccess);
 
-	/*Setter functions*/
+	/*Setter functions
 	void AddRoundNumber(int32 Val);
 	void AddPlayerScore(int32 Val);
 	void AddEscapedBalloons(int32 Val);
 
-	/*Getter functions*/
+	/*Getter functions
 	UFUNCTION(BlueprintPure)
 		int32 GetRoundNumber() const;
 	UFUNCTION(BlueprintPure)
@@ -59,9 +75,10 @@ private:
 	int32 PlayerScore;
 	int32 NumEscapedBalloons;
 
-	/*Delegates*/
+	/*Delegates
 public:
 	FUpdateRoundNumber RoundNumber_Delegate;
 	FUpdateScore Score_Delegate;
 	FUpdateEscapedBalloons EscapedBalloons_Delegate;
+*/
 };

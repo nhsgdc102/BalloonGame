@@ -7,8 +7,12 @@
 #include "RichTextBlock.h"
 #include "TextBlock.h"
 #include "HorizontalBox.h"
+#include "VerticalBox.h"
+#include "Button.h"
 #include "CP_BestRecord.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/World.h"
+#include "CP_GameInstance.h"
 
 // Constructor--Sets default values
 UCP_MainMenu::UCP_MainMenu(const FObjectInitializer& ObjectInitializer)
@@ -24,6 +28,22 @@ UCP_MainMenu::UCP_MainMenu(const FObjectInitializer& ObjectInitializer)
 	/*Leaderboard Transition*/
 	TransitionDelay = 2.f;
 	DisplayTime = 5.f;
+
+	/*Options Menu*/
+	ButtonHighlightInterval = 1.f;
+	ButtonHighlightIndex = 0;
+}
+
+// Called after initialization
+void UCP_MainMenu::NativeOnInitialized()
+{
+	/*Button bindings*/
+	NewGameButton->OnReleased.AddDynamic(this, &UCP_MainMenu::OnNewGame);
+	ResumeButton->OnReleased.AddDynamic(this, &UCP_MainMenu::OnResumeGame);
+	GoBackButton->OnReleased.AddDynamic(this, &UCP_MainMenu::OnGoBack);
+	CreditsButton->OnReleased.AddDynamic(this, &UCP_MainMenu::OnShowCredits);
+
+	Super::NativeOnInitialized();
 }
 
 // Called after widget is constructed
@@ -32,7 +52,7 @@ void UCP_MainMenu::NativeConstruct()
 	TitleText = Title->GetText().ToString();
 	/*Starts letter switching*/
 	GetWorld()->GetTimerManager().SetTimer<UCP_MainMenu>(LetterSwitch_TimerHandle,
-		this, &UCP_MainMenu::SwitchHighlightLetter, LetterSwitchInterval, true, 4.f);
+		this, &UCP_MainMenu::SwitchHighlightedLetter, LetterSwitchInterval, true, 4.f);
 
 	/*Setup for controlling animations*/
 	FillAnimationMap();
@@ -45,6 +65,12 @@ void UCP_MainMenu::NativeConstruct()
 	LoadedDelegate.BindUObject(this, &UCP_MainMenu::OnAsyncLoadRecord);
 	UGameplayStatics::AsyncLoadGameFromSlot(UCP_BestRecord::GetSlotName(),
 		UCP_BestRecord::GetUserIndex(), LoadedDelegate);
+
+	/*Setup for options menu*/
+	OptionButtons.Add(NewGameButton); OptionTextBlocks.Add(NewGameText);
+	OptionButtons.Add(ResumeButton); OptionTextBlocks.Add(ResumeText);
+	OptionButtons.Add(GoBackButton); OptionTextBlocks.Add(GoBackText);
+	OptionButtons.Add(CreditsButton); OptionTextBlocks.Add(CreditsText);
 
 	/*Calls blueprint construct event*/
 	Super::NativeConstruct();
@@ -145,7 +171,7 @@ void UCP_MainMenu::OnAsyncLoadRecord(const FString& SlotName, const int32 UserIn
 }
 
 // Switches highlighted letter in title
-void UCP_MainMenu::SwitchHighlightLetter()
+void UCP_MainMenu::SwitchHighlightedLetter()
 {
 	/*Checks if the scrolling is done*/
 	if (HighlightPosition == TitleText.Len())
@@ -194,7 +220,7 @@ void UCP_MainMenu::SwitchHighlightStyle()
 	else 
 		/*Restarts letter switching*/
 		GetWorld()->GetTimerManager().SetTimer<UCP_MainMenu>(LetterSwitch_TimerHandle,
-			this, &UCP_MainMenu::SwitchHighlightLetter, LetterSwitchInterval, true);
+			this, &UCP_MainMenu::SwitchHighlightedLetter, LetterSwitchInterval, true);
 }
 
 // Plays leaderboard transition animation
@@ -217,6 +243,150 @@ void UCP_MainMenu::HideLeaderboard()
 
 	/*Starts letter switching again with 2 second delay*/
 	GetWorld()->GetTimerManager().SetTimer<UCP_MainMenu>(LetterSwitch_TimerHandle,
-		this, &UCP_MainMenu::SwitchHighlightLetter, LetterSwitchInterval, true, 2.f);
+		this, &UCP_MainMenu::SwitchHighlightedLetter, LetterSwitchInterval, true, 2.f);
 }
 
+// Handles main menu touch functionality to get to options menu
+FReply UCP_MainMenu::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	/*Checks whether or not options is visible*/
+	if (OptionsMenu->IsVisible())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Not opening options menu"));
+		/*Performs base functionality to avoid interfering with buttons*/
+		return FReply::Unhandled();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Opening options menu"));
+		/*Returns handled and options options menu*/
+		OpenOptionsMenu();
+		return FReply::Handled();
+	}
+}
+
+/*Options Menu*/
+// Opens options menu, hides title screen
+void UCP_MainMenu::OpenOptionsMenu()
+{
+	/*Stops all title-screen related functionality*/
+	Title->SetVisibility(ESlateVisibility::Hidden);
+	Prompt->SetVisibility(ESlateVisibility::Hidden);
+	Leaderboard->SetVisibility(ESlateVisibility::Hidden);
+
+	GetWorld()->GetTimerManager().ClearTimer(LetterSwitch_TimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(StyleSwitch_TimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(LeaderboardDisplay_TimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(LeaderboardHide_TimerHandle);
+
+	UWidgetAnimation* FlashingPromptAnim = GetAnimationByName("FlashingPrompt");
+	if (FlashingPromptAnim)
+		StopAnimation(FlashingPromptAnim);
+
+	/*Makes options menu visible and starts highlighting*/
+	OptionsMenu->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	GetWorld()->GetTimerManager().SetTimer<UCP_MainMenu>(ButtonSwitch_TimerHandle,
+		this, &UCP_MainMenu::SwitchHiglightedOption, ButtonHighlightInterval, true, 2.f);
+
+	/*Also makes sure balloons are unpopped*/
+	ReplaceBalloonImages(false);
+}
+
+// Hides options menu, opens title screen
+void UCP_MainMenu::CloseOptionsMenu()
+{
+	/*Hides options menu*/
+	OptionsMenu->SetVisibility(ESlateVisibility::Hidden);
+	GetWorld()->GetTimerManager().ClearTimer(ButtonSwitch_TimerHandle);
+
+	/*Restarts title functionality*/
+	Title->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	Prompt->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	Leaderboard->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	GetWorld()->GetTimerManager().SetTimer<UCP_MainMenu>(LetterSwitch_TimerHandle,
+		this, &UCP_MainMenu::SwitchHighlightedLetter, LetterSwitchInterval, true, 4.f);
+	PlayAnimationByName(TEXT("FlashingPrompt"), 0.f, 0, EUMGSequencePlayMode::Forward, 1.f);
+}
+
+// Switch highlighted option
+void UCP_MainMenu::SwitchHiglightedOption()
+{
+	/*Removes previous highlight (no matter if one exists)*/
+	if (ButtonHighlightIndex == 0)
+		HighlightButton(OptionButtons.Num() - 1, false);
+	else
+		HighlightButton(ButtonHighlightIndex - 1, false);
+
+	/*Highlights current button*/
+	HighlightButton(ButtonHighlightIndex, true);
+
+	/*Moves to next button*/
+	ButtonHighlightIndex++;
+	if (ButtonHighlightIndex >= OptionButtons.Num())
+		ButtonHighlightIndex = 0;
+}
+
+// Helper function for highlighting (or removing highlight) on a button
+void UCP_MainMenu::HighlightButton(int32 ButtonIndex, bool bHighlight)
+{
+	if (OptionButtons.IsValidIndex(ButtonIndex) && OptionTextBlocks.IsValidIndex(ButtonIndex))
+	{
+		UButton* TargetButton = OptionButtons[ButtonIndex];
+		UTextBlock* TargetText = OptionTextBlocks[ButtonIndex];
+
+		if (IsValid(TargetButton) && IsValid(TargetText))
+		{
+			if (bHighlight)
+			{
+				/*Sets button background opaque*/
+				TargetButton->SetBackgroundColor(
+					TargetButton->BackgroundColor.CopyWithNewOpacity(1.f));
+
+				/*Makes text white*/
+				TargetText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+			}
+			else
+			{
+				/*Sets background transparent*/
+				TargetButton->SetBackgroundColor(
+					TargetButton->BackgroundColor.CopyWithNewOpacity(0.f));
+
+				/*Makes text black*/
+				TargetText->SetColorAndOpacity(FSlateColor(FLinearColor::Black));
+			}
+		}
+	}
+}
+
+/*Button-linked events*/
+// Starts a new game by opening the starting level
+void UCP_MainMenu::OnNewGame_Implementation()
+{
+	/*No necessary code here*/
+}
+
+// Checks for a save game and before starting
+void UCP_MainMenu::OnResumeGame_Implementation()
+{
+	UCP_GameInstance* GameInstanceObj = GetWorld()->GetGameInstance<UCP_GameInstance>();
+	if (GameInstanceObj)
+	{
+		if (GameInstanceObj->LoadSaveState())
+			/*OnNewGame() handles opening next level*/
+			OnNewGame();
+		else
+			/*Fill body with code for error pop-up*/;
+	}
+}
+
+// Opens title screen back up
+void UCP_MainMenu::OnGoBack_Implementation()
+{
+	CloseOptionsMenu();
+}
+
+// Opens up credits
+void UCP_MainMenu::OnShowCredits_Implementation()
+{
+	/*Fill body*/
+}

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-//For save game
-#include "scoreSaver.h"
-#include "GameStatus.h"
+/*For save game -> https://docs.unrealengine.com/en-US/Gameplay/SaveGame/index.html */
+#include "CP_SaveState.h"
+#include "CP_BestRecord.h"
 #include "Kismet/GameplayStatics.h"
