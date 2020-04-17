@@ -16,21 +16,19 @@ class BALLOONGAME_API UCP_SaveState : public USaveGame
 	
 public:
 	// Constructor--sets default values
-	UCP_SaveState();
+	//UCP_SaveState();
 
 	/*Setter Functions*/
-	void SetRoundNumber(int32 Val);
-	void SetPlayerScore(int32 Val);
-	void SetEscapedBalloons(int32 Val);
-	void SetSpawnProbabilityMatrix(FMatrix Matrix);
-	void SetLevelOfPlay(int32 LevelIndex);
+	void SetRoundNumber(const int32 Val);
+	void SetPlayerScore(const int32 Val);
+	void SetEscapedBalloons(const int32 Val);
+	void SetBalloonProbabilities(const FVector InVector);
 
 	/*Getter Functions*/
 	int32 GetRoundNumber() const;
 	int32 GetPlayerScore() const;
 	int32 GetEscapedBalloons() const;
-	FMatrix GetSpawnProbabilityMatrix() const;
-	int32 GetLevelOfPlay() const;
+	FVector GetBalloonProbabilities() const;
 	static FString GetSlotName();
 	static int32 GetUserIndex();
 
@@ -39,10 +37,7 @@ private:
 	int32 RoundNum;
 	int32 PlayerScore;
 	int32 NumEscapedBalloons;
-	// Probabilities stored in left column
-	FMatrix SpawnProbabilityMat;
-	// Stores index of level
-	int32 LevelOfPlay;
+	FVector BalloonProbabilities;
 
 	/*Metadata*/
 	const static FString SaveSlotName;

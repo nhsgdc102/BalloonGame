@@ -6,16 +6,6 @@
 #include "Engine/GameInstance.h"
 #include "CP_GameInstance.generated.h"
 
-/*
-/*Forward declarations
-class USaveGame;
-
-/*Delegate declarations
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateRoundNumber, int32, RoundNumber);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateScore, int32, Score);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateEscapedBalloons, int32, EscapedBalloons);
-*/
-
 /**
  * Stores information needed by game mode and game state to initialize the game
  */
@@ -29,17 +19,20 @@ public:
 	UCP_GameInstance();
 
 	// Loading data function--to be called from main menu widget
-	bool LoadSaveState();
+	UFUNCTION(BlueprintCallable)
+		bool LoadSaveState();
 
 	/*Getter functions*/
 	int32 GetInitRoundNumber() const;
 	int32 GetInitPlayerScore() const;
 	int32 GetInitEscapedBalloons() const;
+	FVector GetInitBalloonProbabilities() const;
 	
 private:
 	int32 InitRoundNum;
 	int32 InitPlayerScore;
 	int32 InitNumEscapedBalloons;
+	FVector InitBalloonProbabilities;
 
 /*
 	/*Saving high score and highest round

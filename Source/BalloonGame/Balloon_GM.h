@@ -25,13 +25,15 @@
  init prefix is for const variable
 
  */
+
 UENUM(BlueprintType)
-enum class EBalloonType : uint8
+enum class EBalloonType2 : uint8
 {
 	BT_Slow		UMETA(DisplayName = "Slow"),
 	BT_Medium	UMETA(DisplayName = "Medium"),
 	BT_Fast		UMETA(DisplayName = "Fast")
 };
+
 //Source - https://wiki.unrealengine.com/Enums_For_Both_C%2B%2B_and_BP
 
 UCLASS()
@@ -126,7 +128,7 @@ public:
 		FTransform getRandomSpawn() const;
 	UFUNCTION(BlueprintCallable)
 		//Returns randomly one of the balloon types()
-		EBalloonType getRandBalloonType() const;
+		EBalloonType2 getRandBalloonType() const;
 	UFUNCTION(BlueprintCallable)
 		//spawns balloon of randomized type and transform
 		void spawnBalloon();

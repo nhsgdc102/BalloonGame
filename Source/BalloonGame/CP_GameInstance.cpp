@@ -2,13 +2,6 @@
 
 
 #include "CP_GameInstance.h"
-
-/*
-/*Additional Includes
-#include "Kismet/GameplayStatics.h"
-#include "CP_BestRecord.h"
-#include "CP_SaveState.h"
-*/
 #include "Kismet/GameplayStatics.h"
 #include "CP_SaveState.h"
 
@@ -16,16 +9,17 @@
 UCP_GameInstance::UCP_GameInstance()
 {
 	/*Default values -- used for new games*/
-	InitRoundNum = 1;
+	InitRoundNum = 0;
 	InitPlayerScore = 0;
 	InitNumEscapedBalloons = 0;
+	InitBalloonProbabilities = FVector(1.f, 0.f, 0.f);
 }
 
 // Loading data function--to be called from main menu widget
 bool UCP_GameInstance::LoadSaveState()
 {
 	/*Synchronously loads CP_SaveState object*/
-	UCP_SaveState* LoadedObj = Cast<UCP_SaveState, USaveGame>(
+	UCP_SaveState* const LoadedObj = Cast<UCP_SaveState, USaveGame>(
 		UGameplayStatics::LoadGameFromSlot(UCP_SaveState::GetSlotName(), UCP_SaveState::GetUserIndex()));
 	if (LoadedObj)
 	{
@@ -33,6 +27,7 @@ bool UCP_GameInstance::LoadSaveState()
 		InitRoundNum = LoadedObj->GetRoundNumber();
 		InitPlayerScore = LoadedObj->GetPlayerScore();
 		InitNumEscapedBalloons = LoadedObj->GetEscapedBalloons();
+		InitBalloonProbabilities = LoadedObj->GetBalloonProbabilities();
 
 		/*Deletes loaded save object (This does not point to the object in the memory slot)*/
 		LoadedObj->BeginDestroy();
@@ -47,6 +42,7 @@ bool UCP_GameInstance::LoadSaveState()
 int32 UCP_GameInstance::GetInitRoundNumber() const { return InitRoundNum; }
 int32 UCP_GameInstance::GetInitPlayerScore() const { return InitPlayerScore; }
 int32 UCP_GameInstance::GetInitEscapedBalloons() const { return InitNumEscapedBalloons; }
+FVector UCP_GameInstance::GetInitBalloonProbabilities() const { return InitBalloonProbabilities; }
 
 /*
 /*Saving high score and highest round

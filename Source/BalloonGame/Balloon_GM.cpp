@@ -140,13 +140,13 @@ void ABalloon_GM::spawnBalloon()
 
 	switch (getRandBalloonType())
 	{
-	case EBalloonType::BT_Slow:
+	case EBalloonType2::BT_Slow:
 		randBalloonType = slowBalloonType;
 		break;
-	case EBalloonType::BT_Medium:
+	case EBalloonType2::BT_Medium:
 		randBalloonType = mediumBalloonType;
 		break;
-	case EBalloonType::BT_Fast:
+	case EBalloonType2::BT_Fast:
 		randBalloonType = fastBalloonType;
 		break;
 	}
@@ -212,10 +212,10 @@ FTransform ABalloon_GM::getRandomSpawn() const
 	*/
 }
 
-EBalloonType ABalloon_GM::getRandBalloonType() const
+EBalloonType2 ABalloon_GM::getRandBalloonType() const
 {
 	int index; //The index of the array that is randomly chosen
-	EBalloonType BT_Type;
+	EBalloonType2 BT_Type;
 
 	//Randomizes value between 0 and 1;
 	float randFloat = FMath::RandRange(0.f, 1.f);
@@ -243,16 +243,16 @@ EBalloonType ABalloon_GM::getRandBalloonType() const
 	//Chooses balloon type based on index
 	switch (index) {
 	case 0:
-		BT_Type = EBalloonType::BT_Slow;
+		BT_Type = EBalloonType2::BT_Slow;
 		break;
 	case 1:
-		BT_Type = EBalloonType::BT_Medium;
+		BT_Type = EBalloonType2::BT_Medium;
 		break;
 	case 2:
-		BT_Type = EBalloonType::BT_Fast;
+		BT_Type = EBalloonType2::BT_Fast;
 		break;
 	default:
-		BT_Type = EBalloonType::BT_Slow;
+		BT_Type = EBalloonType2::BT_Slow;
 		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 10.f, FColor::Black, TEXT("Not enough balloon types"));
 		break;
 	}

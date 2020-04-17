@@ -21,8 +21,7 @@ ACP_Slingshot::ACP_Slingshot()
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComp->SetupAttachment(GetRootComponent());
-	CameraComp->RelativeLocation = FVector(-80.3f, 0.f, 24.5f);
-
+	CameraComp->SetRelativeLocation(FVector(-80.3f, 0.f, 24.5f));
 
 }
 
